@@ -1,41 +1,41 @@
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MonthlyReport {
+    FileReader fileReader = new FileReader();
     public HashMap<Integer, ArrayList<MonthlyItem>> monthlyData;
     MonthlyReport() {
         monthlyData = new HashMap<>();
     }
 
+/* Проверяем значение из файлов на null;
+ * Делим файл по строкам, затем по запятым;
+ * Сохраняем полученные значения строки в объекте класса MonthlyItem;
+ * Объекты добавляем в список месяца;
+ * Список помещаем в хэш-таблицу, где ключ - номер месяца;
+ */
     public void addMonthsInformation (String path, Integer month) {
         ArrayList<MonthlyItem> oneMonthInformation = new ArrayList<>();
-        String monthContent = readFileContentsOrNull(path);
-        String[] lines = monthContent.split("\r?\n");                 //Делим файл по строкам, затем по запятым;
-        for (int i = 1; i < lines.length; i++) {                            //Сохраняем полученные значения строки в объекте класса MonthlyItem;
-            String[] parts = lines[i].split(",");                     //Объекты добавляем в список месяца;
-            String itemName = parts[0];                                     //Список помещаем в хэш-таблицу, где ключ - номер месяца;
-            boolean isExpense = Boolean.parseBoolean(parts[1]);
-            int quantity = Integer.parseInt(parts[2]);
-            int sumOfOne = Integer.parseInt(parts[3]);
-            MonthlyItem monthlyItem = new MonthlyItem(itemName, isExpense, quantity, sumOfOne);
-            oneMonthInformation.add(monthlyItem);
-        }
+        String monthContent = fileReader.readFileContentsOrNull(path);
+        if (monthContent != null) {
+            String[] lines = monthContent.split("\r?\n");
+            for (int i = 1; i < lines.length; i++) {
+                String[] parts = lines[i].split(",");
+                String itemName = parts[0];
+                boolean isExpense = Boolean.parseBoolean(parts[1]);
+                int quantity = Integer.parseInt(parts[2]);
+                int sumOfOne = Integer.parseInt(parts[3]);
+                MonthlyItem monthlyItem = new MonthlyItem(itemName, isExpense, quantity, sumOfOne);
+                oneMonthInformation.add(monthlyItem);
+            }
             monthlyData.put(month, oneMonthInformation);
-
-    }
-
-    private String readFileContentsOrNull(String path)
-    {
-        try {
-            return Files.readString(Path.of(path));
-        } catch (IOException e) {
-            System.out.println("Невозможно прочитать файл с месячным отчётом. Возможно, файл не находится в нужной директории.");
-            return null;
         }
     }
+
+/* Считаем общую сумму трат за месяц;
+ * @return полученное значение;
+ */
     public Integer countMonthSpending(int month) {
         int sumOfSpending = 0;
         for (MonthlyItem item : monthlyData.get(month)) {
@@ -45,7 +45,9 @@ public class MonthlyReport {
         }
         return sumOfSpending;
     }
-
+/* Считаем общий доход за месяц;
+ * @return полученное значение;
+ */
     public Integer countMonthProfit(int month) {
         int sumOfProfit = 0;
         for (MonthlyItem item : monthlyData.get(month)) {
@@ -55,7 +57,7 @@ public class MonthlyReport {
         }
         return sumOfProfit;
     }
-
+// Создаём список с названиями месяцев, чтобы потом использовать их в статистике;
     public void printMonthName(int month) {
         ArrayList<String> monthName = new ArrayList<>();
         monthName.add("Январь");
@@ -63,9 +65,14 @@ public class MonthlyReport {
         monthName.add("Март");
         System.out.println(monthName.get(month));
     }
-    public void getMostProfitableItemInMonth(int month) {                   //В цикле ищем, какой из объектов имеет в себе прибыль;
-        int multiply;                                                       //У них считаем произведение цены и количества предметов;
-        int maxMultiply = 0;                                                //Сравниваем произведения, сохраняем максимальное и его название;
+
+    /* В цикле ищем, какой из объектов имеет в себе прибыль;
+     * У них считаем произведение цены и количества предметов;
+     * Сравниваем произведения, сохраняем максимальное и его название;
+     */
+    public void getMostProfitableItemInMonth(int month) {
+        int multiply;
+        int maxMultiply = 0;
         String name = null;
         for (MonthlyItem item : monthlyData.get(month)) {
             if (!item.isExpense) {
@@ -79,6 +86,7 @@ public class MonthlyReport {
         System.out.println("Товар месяца с наибольшей выручкой: " + name + " , сумма выручки: " + maxMultiply);
     }
 
+    //Определяем и печатаем самый затратный товар (с учетом количества), и саму сумму;
     public void getBiggestExpense(int month) {
         String name = null;
         int maxExpense = 0;
